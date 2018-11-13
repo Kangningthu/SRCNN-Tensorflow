@@ -55,8 +55,8 @@ def preprocess(path, scale=3):
   image = image / 255.
   label_ = label_ / 255.
 
-  input_ = scipy.ndimage.interpolation.zoom(label_, (1./scale), prefilter=False)
-  input_ = scipy.ndimage.interpolation.zoom(input_, (scale/1.), prefilter=False)
+  input_ = scipy.ndimage.interpolation.zoom(label_, (1./scale), prefilter=False) #downscale
+  input_ = scipy.ndimage.interpolation.zoom(input_, (scale/1.), prefilter=False) #upscale
 
   return input_, label_
 
@@ -68,7 +68,7 @@ def prepare_data(sess, dataset):
     For train dataset, output data would be ['.../t1.bmp', '.../t2.bmp', ..., '.../t99.bmp']
   """
   if FLAGS.is_train:
-    filenames = os.listdir(dataset)
+    filenames = os.listdir(dataset) 
     data_dir = os.path.join(os.getcwd(), dataset)
     data = glob.glob(os.path.join(data_dir, "*.bmp"))
   else:
@@ -109,13 +109,13 @@ def modcrop(image, scale=3):
   Then, subtract the modulo from height (and width) of original image size.
   There would be no remainder even after scaling operation.
   """
-  if len(image.shape) == 3:
+  if len(image.shape) == 3:      
     h, w, _ = image.shape
     h = h - np.mod(h, scale)
     w = w - np.mod(w, scale)
     image = image[0:h, 0:w, :]
   else:
-    h, w = image.shape
+    h, w = image.shape #get rid of the remianing part
     h = h - np.mod(h, scale)
     w = w - np.mod(w, scale)
     image = image[0:h, 0:w]
@@ -135,9 +135,9 @@ def input_setup(sess, config):
   sub_label_sequence = []
   padding = abs(config.image_size - config.label_size) / 2 # 6
 
-  if config.is_train:
+  if config.is_train:  # if train, read the all the data
     for i in xrange(len(data)):
-      input_, label_ = preprocess(data[i], config.scale)
+      input_, label_ = preprocess(data[i], config.scale) 
 
       if len(input_.shape) == 3:
         h, w, _ = input_.shape
@@ -157,7 +157,7 @@ def input_setup(sess, config):
           sub_label_sequence.append(sub_label)
 
   else:
-    input_, label_ = preprocess(data[2], config.scale)
+    input_, label_ = preprocess(data[2], config.scale) # if test, then need zero padding, only read the image
 
     if len(input_.shape) == 3:
       h, w, _ = input_.shape
@@ -195,7 +195,7 @@ def input_setup(sess, config):
 def imsave(image, path):
   return scipy.misc.imsave(path, image)
 
-def merge(images, size):
+def merge(images, size):   #get back the original pictures
   h, w = images.shape[1], images.shape[2]
   img = np.zeros((h*size[0], w*size[1], 1))
   for idx, image in enumerate(images):
